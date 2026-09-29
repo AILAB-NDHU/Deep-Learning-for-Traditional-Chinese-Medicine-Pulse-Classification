@@ -1,0 +1,10 @@
+# Versions used for the revised manuscript (server: Python 3.12.3, CUDA 13.0 / local: Python 3.13, CUDA 12.8)
+numpy>=2.4
+scipy>=1.17
+pandas>=3.0
+scikit-learn==1.9.0
+xgboost>=3.3
+imbalanced-learn==0.14.2
+matplotlib>=3.11
+Pillow
+torch>=2.12          # install the CUDA build matching your driver: https://pytorch.org/get-started/locally/

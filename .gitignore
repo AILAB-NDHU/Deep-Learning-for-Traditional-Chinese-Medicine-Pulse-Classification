@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pt
+*.npz
+*.log
+/outputs/
+/revision_r1/outputs*/
+/data/synthetic_demo/pluse/
+# demo-run artefacts at the repo root (the archived copies under results/ are tracked)
+/stat_rerun_raw*.csv
+/stat_rerun_smote_raw.csv
+/stat_rerun_smote_adasyn_log.csv
+/stat_rerun_results.md
+/stat_rerun_smote_results.md
+/stat_rerun_smote_run_meta.json
