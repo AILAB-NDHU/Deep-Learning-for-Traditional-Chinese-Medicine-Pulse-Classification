@@ -45,7 +45,8 @@ def main():
         if not folder.exists():
             print(f"[WARN] {folder} missing"); continue
         pngs = sorted(folder.glob("*.png"))
-        st = Counter(files=len(pngs))
+        st = Counter(files=len(pngs), files_rejected=0, files_ok=0, peaks=0,
+                     beats_kept=0, beats_truncated=0, files_with_zero_beats=0)
         for p in pngs:
             try:
                 wf, fs = read_waveform_from_png(p, assumed_duration_s=6.0)

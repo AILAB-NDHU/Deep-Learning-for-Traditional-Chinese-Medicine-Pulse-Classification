@@ -147,10 +147,11 @@ for i, r in order.iterrows():
     body += (f"{i + 1} & {D[r.model]} & {pm(r.macro_f1_mean, r.macro_f1_sd, i == 0)} & [{r.macro_f1_lo:.3f}, {r.macro_f1_hi:.3f}] & "
              f"{r.bal_acc_mean:.3f} & {r.roc_auc_mean:.3f} & {r.pr_auc_mean:.3f} & {r.tight_f1_mean:.2f} & "
              f"{rk['bal_acc'][i]} / {rk['roc_auc'][i]} / {rk['pr_auc'][i]} / {rk['tight_f1'][i]} \\\\\n")
-w("tab_rank", "\\# & Model & Macro-F1 & 95\\% CI & Bal.\\ Acc & ROC-AUC & PR-AUC & Tight F1 & Rank by Bal.\\ Acc / ROC / PR / Tight \\\\\n\\midrule\n" + body,
-  "Overall leakage-free ranking (single unified harness; macro-F1 is the pre-specified primary metric). The last column gives each "
-  "model's rank under the four secondary metrics; the ranking is metric-dependent and the top tier is separated by less than the "
-  "run-to-run variation. " + NOTE, "tab:rank", colspec="clcccccccc")
+w("tab_rank", "\\# & Model & Macro-F1 & 95\\% CI & Bal.\\ Acc & ROC-AUC & PR-AUC & Tight F1 & Ranks$^{\\dagger}$ \\\\\n\\midrule\n" + body,
+  "Overall leakage-free ranking (single unified harness; macro-F1 is the pre-specified primary metric). The last column$^{\\dagger}$ gives each "
+  "model's rank by balanced accuracy / ROC-AUC / PR-AUC / Tight F1; the ranking is metric-dependent and the top tier is separated by less than the "
+  "run-to-run variation. " + NOTE, "tab:rank", colspec="clcccccccc",
+  extra="\\small\\setlength{\\tabcolsep}{4pt}\n")
 
 # Table 7 — effects (2x2)
 J = pd.concat({k: S(m) for k, m in [("as", "cnn_aug"), ("ns", "cnn_noaug"), ("an", "cnn_aug_nosampler"), ("nn", "cnn_noaug_nosampler")]}, axis=1).dropna()
@@ -164,7 +165,7 @@ for k, e in eff.items():
     c = ci(e.values); body += f"{k} & ${e.mean():+.3f}$ & [${c[0]:+.3f}$, ${c[1]:+.3f}$] & {fp(nb_p(e.values))} & {mde(e.values):.3f} \\\\\n"
 w("tab_ablation", "Effect on macro-F1 & Estimate & 95\\% CI & NB $p$ & MDE \\\\\n\\midrule\n" + body,
   f"Main effects and interaction of the $2\\times2$ ablation (1D-CNN, $n={len(J)}$ paired runs). NB $p$ = Nadeau--Bengio "
-  "corrected resampled $t$-test; MDE = minimum detectable effect at $\\alpha=0.05$, power 0.8.", "tab:ablation", star=False, colspec="lccc c")
+  "corrected resampled $t$-test; MDE = minimum detectable effect at $\\alpha=0.05$, power 0.8.", "tab:ablation", star=True, colspec="lcccc")
 
 # Table — comparison family
 fam = {"6-mode aug.\\ vs.\\ none (1D-CNN)": paired("cnn_aug", "cnn_noaug"), "ResNet1D $+$ GC vs.\\ plain": paired("resnet_gc", "resnet")}
@@ -174,9 +175,9 @@ praw = {k: nb_p(v) for k, v in fam.items()}; padj = holm(praw)
 body = ""
 for k, d in fam.items():
     c = ci(d); dz = d.mean() / d.std(ddof=1)
-    body += f"{k} & ${d.mean():+.3f}$ & [${c[0]:+.3f}$, ${c[1]:+.3f}$] & {dz:.2f} & {fp(praw[k])} & {fp(padj[k])} & {mde(d):.3f} \\\\\n"
+    body += f"{k} & ${d.mean():+.3f}$ & [${c[0]:+.3f}$, ${c[1]:+.3f}$] & ${dz:.2f}$ & {fp(praw[k])} & {fp(padj[k])} & {mde(d):.3f} \\\\\n"
 w("tab_family", "Comparison (A vs.\\ B) & $\\Delta$ macro-F1 & 95\\% CI & $d_z$ & NB $p$ & Holm $p$ & MDE \\\\\n\\midrule\n" + body,
-  "The pre-registered comparison family (leakage-free macro-F1, 50 paired runs). NB $p$ = Nadeau--Bengio corrected resampled "
+  "The pre-specified comparison family (leakage-free macro-F1, 50 paired runs). NB $p$ = Nadeau--Bengio corrected resampled "
   "$t$-test (primary); Holm $p$ = step-down family-wise adjustment over all rows; $d_z$ = Cohen's paired effect size; MDE at "
   "$\\alpha=0.05$, power 0.8. No contrast is significant after adjustment.", "tab:family", colspec="lcccccc")
 
@@ -192,7 +193,7 @@ if both:
     rho, prho = stats.spearmanr([a for a, _ in infl], [b for _, b in infl])
     w("tab_opt", "Model & Params & Leakage-free & Optimistic & Inflation $\\Delta$ [95\\% CI] \\\\\n\\midrule\n" + body,
       f"Optimistic (test fold as early-stopping signal) vs.\\ leakage-free protocol, macro-F1 over the same 50 partitions; "
-      f"Spearman $\\rho$(params, inflation) $= {rho:.2f}$, $p={prho:.2f}$. Classical models have no early-stopping channel.", "tab:opt", colspec="lcccc")
+      f"Spearman $\\rho$ between parameter count and inflation $= {rho:.2f}$, $p={prho:.2f}$. Classical models have no early-stopping channel.", "tab:opt", colspec="lcccc")
 else:
     # fallback: build Table 5 from the original-submission harness output so the document compiles
     arch = HERE.parent / "_working_archive" / "stat_rerun_raw.csv"
@@ -207,7 +208,7 @@ else:
         rho, prho = stats.spearmanr([a for a, _ in infl], [b for _, b in infl])
         w("tab_opt", "Model & Params & Leakage-free & Optimistic & Inflation $\\Delta$ [95\\% CI] \\\\\n\\midrule\n" + body,
           f"Optimistic vs.\\ leakage-free protocol, macro-F1 over the same 50 partitions (original-submission harness run); "
-          f"Spearman $\\rho$(params, inflation) $= {rho:.2f}$, $p={prho:.2f}$. Classical models have no early-stopping channel.", "tab:opt", colspec="lcccc")
+          f"Spearman $\\rho$ between parameter count and inflation $= {rho:.2f}$, $p={prho:.2f}$. Classical models have no early-stopping channel.", "tab:opt", colspec="lcccc")
         print("NOTE: tab_opt built from the ORIGINAL submission run (no optimistic protocol in this results dir)")
 
 # Table 8 — SMOTE family on mu-sorted features (if the rerun exists)
@@ -226,7 +227,7 @@ if smote_csv.exists():
         if key == "xgb_baseline":
             body += f"{lab} & {pm(g.macro_f1.mean(), g.macro_f1.std(ddof=1))} & ${g.tight_f1.mean():.2f}$ & --- & --- & --- \\\\\n"
         else:
-            c = ci(d); note = f" (fell back to baseline in {nfall}/50 folds)" if key == "xgb_adasyn" and nfall is not None else ""
+            c = ci(d); note = f" (identical to reference in {nfall}/50 runs)" if key == "xgb_adasyn" and nfall is not None else ""
             body += (f"{lab}{note} & {pm(g.macro_f1.mean(), g.macro_f1.std(ddof=1))} & ${g.tight_f1.mean():.2f}$ & ${d.mean():+.3f}$ & "
                      f"[${c[0]:+.3f}$, ${c[1]:+.3f}$] & {fp(nb_p(d)) if d.std() > 0 else '---'} \\\\\n")
     w("tab_smote", "XGBoost training set & Macro-F1 & Tight F1 & $\\Delta$ vs.\\ reference & 95\\% CI & NB $p$ \\\\\n\\midrule\n" + body,
@@ -279,13 +280,14 @@ def cm_rows(tag):
     out = ""
     for l in grab(tag)[:5]:
         cells = [c.strip() for c in l.strip("|").split("|")]
+        cells[0] = {"precision": "Precision"}.get(cells[0], cells[0])
         out += " & ".join(c.replace("%", "\\%") for c in cells) + " \\\\\n"
     return out
 body = "\\multicolumn{5}{l}{\\textit{Beat level ($n$ = all held-out beats over 50 runs)}} \\\\\n" + cm_rows("beat-level") + \
        "\\midrule\n\\multicolumn{5}{l}{\\textit{Subject--label-group level (mean probability per group, 10 repeats)}} \\\\\n" + cm_rows("subject-level (groups)")
 w("tab_confusion", "True $\\backslash$ predicted & Slippery & Tight & Wiry & Recall \\\\\n\\midrule\n" + body,
   "Aggregated confusion matrices of the plain ResNet1D under the leakage-free protocol, with per-class precision, recall and F1. "
-  "Row percentages are recall by class.", "tab:confusion", star=False, colspec="lcccc")
+  "Row percentages are recall by class.", "tab:confusion", star=True, colspec="lcccc")
 
 # numbers.tex
 def M(name, val):

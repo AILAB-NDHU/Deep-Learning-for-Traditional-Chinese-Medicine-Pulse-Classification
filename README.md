@@ -38,6 +38,7 @@ revision_r1/                 scripts added for the revision
 
 results/original_submission/  per-run scores of the submitted version (July 2026)
 results/server_rerun_2026-09/ per-run scores of the revision rerun (both protocols)
+results/laptop_replication_2026-09/ per-run scores of the independent replication (leakage-free protocol)
 ```
 
 ## Quick start (synthetic demo, CPU is fine)
